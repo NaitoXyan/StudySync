@@ -2,14 +2,17 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:studysync/add_activities.dart';
+import 'package:studysync/addActivityScreen.dart';
 
 class Subjects extends StatefulWidget {
+  const Subjects({super.key});
 
   State<Subjects> createState() => _SubjectsState();
 }
 
 class _SubjectsState extends State<Subjects> {
+  //main subject screen
+  AddSubject addSubjectInstance = AddSubject();
 
   @override
   Widget build(BuildContext context) {
@@ -19,12 +22,14 @@ class _SubjectsState extends State<Subjects> {
           body: Column(
             children: [
               ElevatedButton(onPressed: () {
-                var killka = AddSubject().badbo;
-                Navigator.pop(context, killka);
-              },
-                  child: Text('go back')),
+                String sendSubjectToPrevScreen = addSubjectInstance.subjectCardKey;
 
-              AddSubject(),
+                Navigator.pop(context, sendSubjectToPrevScreen);
+              },
+                  child: Text('go back')
+              ),
+
+              addSubjectInstance,
             ],
           )
       ),
@@ -33,7 +38,7 @@ class _SubjectsState extends State<Subjects> {
 }
 
 class AddSubject extends StatefulWidget {
-  String badbo = '';
+  String subjectCardKey = '';
 
   AddSubject ({Key ? key}) : super(key: key);
 
@@ -42,6 +47,7 @@ class AddSubject extends StatefulWidget {
 }
 
 class _AddSubject extends State<AddSubject> {
+  //this part kay pag add, remove subjects
   final subjectController = TextEditingController();
 
   List<String> subjectList = [];
@@ -87,7 +93,7 @@ class _AddSubject extends State<AddSubject> {
                 onTap: () {
                   setState(() {
                     subjectIndex = index;
-                    widget.badbo = subjectList[index];
+                    widget.subjectCardKey = subjectList[index];
                   });
                 },
 
