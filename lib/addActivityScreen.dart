@@ -140,7 +140,6 @@ class _InputActivities extends State<InputActivities> {
 
             setState(() {
               _subjectController.text = result;
-              print('$result from here');
             });
           },
 

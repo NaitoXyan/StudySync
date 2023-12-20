@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'add_activities.dart';
+import 'addActivityScreen.dart';
 
 class ActivityScreen extends StatefulWidget {
   State<ActivityScreen> createState() => _ActivityScreenState();
@@ -7,6 +7,7 @@ class ActivityScreen extends StatefulWidget {
 
 class _ActivityScreenState extends State<ActivityScreen> {
 
+  @override
   Widget build (BuildContext context) {
     return Center(
       child: ElevatedButton(onPressed: () {
