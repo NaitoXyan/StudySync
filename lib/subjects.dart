@@ -1,8 +1,6 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:studysync/addActivityScreen.dart';
+
 
 class Subjects extends StatefulWidget {
   const Subjects({super.key});
