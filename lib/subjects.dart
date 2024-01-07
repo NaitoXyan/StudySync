@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class Subjects extends StatefulWidget {
   const Subjects({super.key});
 
+  @override
   State<Subjects> createState() => _SubjectsState();
 }
 
@@ -24,7 +24,7 @@ class _SubjectsState extends State<Subjects> {
 
                 Navigator.pop(context, sendSubjectToPrevScreen);
               },
-                  child: Text('go back')
+                  child: const Text('go back')
               ),
 
               addSubjectInstance,
