@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'subjects.dart';
 
 class AddActivities extends StatelessWidget {
@@ -40,11 +41,11 @@ class InputActivities extends StatefulWidget {
 
 class _InputActivities extends State<InputActivities> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _subjectController = TextEditingController();
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
-  final TextEditingController _subjectController = TextEditingController();
-
-  late String subjectDisplay = '';
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +54,8 @@ class _InputActivities extends State<InputActivities> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+
+          //subject text label
           const Padding(
             padding: EdgeInsets.only(left: 10, right: 10, top: 20),
             child: Text('Subject',
@@ -63,46 +66,36 @@ class _InputActivities extends State<InputActivities> {
             ),
           ),
 
+          //subject button ni siya
           Padding(
             padding: const EdgeInsets.all(10),
-            child: Stack(
-              children: [
-                TextFormField(
-                  controller: _subjectController,
-                  readOnly: true,
-                  decoration: const InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      hintText: 'SUBJECT',
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(
-                              Radius.circular(10.0)
-                          ),
-                          borderSide: BorderSide(
-                            width: 1.0,
-                            color: Colors.white
-                          )
+            child: TextFormField(
+              controller: _subjectController,
+              readOnly: true,
+              onTap: () async {
+                _subjectController.text = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Subjects()),
+                );
+              },
+              decoration: const InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'SUBJECT',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(
+                          Radius.circular(10.0)
+                      ),
+                      borderSide: BorderSide(
+                          width: 1.0,
+                          color: Colors.white
                       )
-                  ),
-                ),
-
-                ListTile(
-                  //pag click mo navigate sa select subject screen
-                  onTap: () async{
-                    var result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Subjects()),
-                    );
-
-                    setState(() {
-                      _subjectController.text = result;
-                    });
-                  },
-                ),
-              ],
-            )
+                  )
+              ),
+            ),
           ),
 
+          //title text ni siya
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.0),
             child: Text('Title',
@@ -113,9 +106,11 @@ class _InputActivities extends State<InputActivities> {
             ),
           ),
 
+          //title textFormField
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: TextFormField(
+              controller: _titleController,
               decoration: const InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
@@ -133,6 +128,7 @@ class _InputActivities extends State<InputActivities> {
             ),
           ),
 
+          //description text
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.0),
             child: Text('Description',
@@ -147,6 +143,7 @@ class _InputActivities extends State<InputActivities> {
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: TextFormField(
+              controller: _descriptionController,
               keyboardType: TextInputType.multiline,
               maxLines: 4,
               decoration: const InputDecoration(
@@ -166,6 +163,7 @@ class _InputActivities extends State<InputActivities> {
             ),
           ),
 
+          //deadline text
           const Padding(
             padding: EdgeInsets.only(left: 10, right: 10, top: 12),
             child: Text('Deadline',
@@ -177,10 +175,13 @@ class _InputActivities extends State<InputActivities> {
             ),
           ),
 
+          //box para sa date and time
           SizedBox(
             height: 100,
             child: Row(
               children: [
+
+                //date entry part
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(10.0),
@@ -203,6 +204,7 @@ class _InputActivities extends State<InputActivities> {
                   )
                 ),
 
+                //time entry part
                 Expanded(
                   child:  Padding(
                     padding: const EdgeInsets.all(10.0),
@@ -216,11 +218,10 @@ class _InputActivities extends State<InputActivities> {
                           fillColor: Colors.white,
                           prefixIcon: Icon(Icons.access_time),
                           enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide.none
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(10)
+                              )
                           ),
-                          focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.blue)
-                          )
                       ),
                     ),
                   ),
@@ -229,21 +230,35 @@ class _InputActivities extends State<InputActivities> {
             ),
           ),
 
+          //add schedule button
           SizedBox(
             height: 100,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 15),
+              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 15.0),
               child: ElevatedButton(
+
+                //balik sa activity screen
                 onPressed: () {
 
+                  //map sa tanan details brod
+                  Map<String, String> activityDetails = {
+                    'subject': _subjectController.text,
+                    'title': _titleController.text,
+                    'description': _descriptionController.text,
+                    'date': _dateController.text,
+                    'time': _timeController.text,
+                  };
+
+                  Navigator.pop(context, activityDetails);
                 },
+
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xffFCC72C),
+                  backgroundColor: const Color(0xffFCC72C),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0)
                   )
                 ),
-                child: const Text('Apply Changes',
+                child: const Text('Add Schedule',
                   style: TextStyle(
                     fontSize: 19,
                     fontWeight: FontWeight.w600
@@ -252,37 +267,40 @@ class _InputActivities extends State<InputActivities> {
               ),
             ),
           ),
-
         ],
       ),
     );
   }
 
   Future<void> selectDate() async {
-    DateTime? _pickedDate = await showDatePicker(
+    DateTime? pickedDate = await showDatePicker(
         context: context,
         initialDate: DateTime.now(),
         firstDate: DateTime(2023),
         lastDate: DateTime(2100)
     );
 
-    if (_pickedDate != null) {
+    if (pickedDate != null) {
       setState(() {
-        _dateController.text = _pickedDate.toString().split(" ")[0];
+        //convert the numbered month into words, I used intl.dart
+        _dateController.text = DateFormat('d MMMM y').format(pickedDate);
+
+        //this is old one, only outputs numbered date
+        // _dateController.text = pickedDate.toString().split(" ")[0];
       });
     }
   }
 
   Future<void> selectTime() async {
-    TimeOfDay? _pickedTime = await showTimePicker(
+    TimeOfDay? pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
       initialEntryMode: TimePickerEntryMode.inputOnly,
     );
 
-    if (_pickedTime != null) {
+    if (pickedTime != null) {
       setState(() {
-        _timeController.text = _pickedTime.format(context);
+        _timeController.text = pickedTime.format(context);
       });
     }
   }

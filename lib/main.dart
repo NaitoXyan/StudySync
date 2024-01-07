@@ -19,7 +19,6 @@ class MyApp extends StatelessWidget {
             color: Colors.white
           )
         ),
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.cyanAccent),
         useMaterial3: true,
       ),
       home: MyHomePage(),
