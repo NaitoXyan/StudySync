@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:studysync/activityScreen.dart';
 import 'package:studysync/schedule.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:studysync/studyTimer.dart';
 
 void main() {
+  AwesomeNotifications().initialize(
+      null,
+      [
+        NotificationChannel(
+          channelKey: 'basic_channel',
+          channelName: 'Basic Notifications',
+          channelDescription: 'Test',
+        )
+      ],
+      debug: true
+  );
   runApp(const MyApp());
 }
 
@@ -35,25 +48,46 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
+  TabBar get _tabBar => const TabBar(
+      labelColor: Colors.amber,
+      unselectedLabelColor: Colors.white,
+      indicatorColor: Colors.amber,
+      indicatorSize: TabBarIndicatorSize.tab,
+      tabs: [
+        Tab(text: 'Schedule'),
+        Tab(text: 'Activities'),
+        Tab(text: 'Study')
+      ]
+  );
+
   @override
   Widget build(BuildContext context) {
    return DefaultTabController(
      length: 3,
      child: Scaffold(
        appBar: AppBar(
-         title: const Text("StudySync"),
+         backgroundColor: const Color(0xFF1E213D),
+         title: const Text(
+           "StudySync",
+           style: TextStyle(
+             fontWeight: FontWeight.w700,
+             color: Colors.white
+           ),
+         ),
          centerTitle: true,
-         bottom: const TabBar(tabs: [
-           Tab(text: "Schedule",),
-           Tab(text: "Activities",),
-           Tab(text: "Study",)
-         ]),
+         bottom: PreferredSize(
+           preferredSize: _tabBar.preferredSize,
+           child: Material(
+             color: const Color(0xFF212761),
+             child: _tabBar,
+           ),
+         )
        ),
 
-       body: TabBarView(children: [
+       body: const TabBarView(children: [
          ScheduleScreen(),
          ActivityScreen(),
-         Text("study part"),
+         StudyTimerScreen(),
        ]),
      ),
    );
