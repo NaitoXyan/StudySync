@@ -2,9 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:studysync/activityDetails.dart';
-import 'addActivityScreen.dart';
+import 'package:studysync/addActivityScreen.dart';
+import 'package:studysync/activityList.dart';
 
 class ActivityScreen extends StatefulWidget {
+  const ActivityScreen({super.key});
+
   @override
   State<ActivityScreen> createState() => _ActivityScreenState();
 }
@@ -14,7 +17,6 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
 
   DateTime currentTime = DateTime.now();
   Timer? timer;
-  List<Map<String, String>> activitiesList = [];
 
   // defining the Animation Controller
   late final AnimationController _animationController = AnimationController(
@@ -123,17 +125,30 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                         //splits it into two lines = \n
                         '${activitiesList[index]['date'] ?? 'No Date'} \n${activitiesList[index]['time'] ?? 'No Time'}'
                       ),
+                      onTap: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ActivityDetails(
+                            title: activitiesList[index]['title'] ?? 'null',
+                            subject: activitiesList[index]['subject']  ?? 'null',
+                            description: activitiesList[index]['description']  ?? 'null',
+                            date: activitiesList[index]['date']  ?? 'null',
+                            time: activitiesList[index]['time']  ?? 'null',
+                            activityIndex: index,
+                          )),
+                        );
 
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ActivityDetails(
-                          title: activitiesList[index]['title'] ?? 'null',
-                          subject: activitiesList[index]['subject']  ?? 'null',
-                          description: activitiesList[index]['description']  ?? 'null',
-                          deadlineDate: activitiesList[index]['date']  ?? 'null',
-                          deadlineTime: activitiesList[index]['time']  ?? 'null',
-                        ))
-                      ),
+                        setState(() {
+                          //if result kay int, delete item using index
+                          if (result is int) {
+                            activitiesList.removeAt(result);
+                          }
+                          //else change item using index
+                          else {
+                            activitiesList[index] = result;
+                          }
+                        });
+                      },
                     ),
                   );
                 },
@@ -151,10 +166,15 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
               height: 90,
               child: ElevatedButton(
                 onPressed: () async {
-                  final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const AddActivities())
+                  final result = await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) {
+                        return AddActivities();
+                      },
+                      settings: RouteSettings(name: 'AddActivities'),
+                    )
                   );
+
 
                   setState(() {
                     activitiesList.add(result);
@@ -170,8 +190,9 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
 
                 child: const Text('Add Activity',
                   style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w600
+                    color: Colors.white,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w600
                   ),
                 ),
               ),

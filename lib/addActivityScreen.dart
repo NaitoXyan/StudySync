@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'subjects.dart';
+import 'package:studysync/subjects.dart';
 
 class AddActivities extends StatelessWidget {
   const AddActivities({super.key});
@@ -46,6 +46,16 @@ class _InputActivities extends State<InputActivities> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
+
+  @override
+  void dispose() {
+    _subjectController.dispose();
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _dateController.dispose();
+    _timeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -258,8 +268,9 @@ class _InputActivities extends State<InputActivities> {
                     borderRadius: BorderRadius.circular(10.0)
                   )
                 ),
-                child: const Text('Add Schedule',
+                child: const Text('Add Activity',
                   style: TextStyle(
+                    color: Colors.black,
                     fontSize: 19,
                     fontWeight: FontWeight.w600
                   ),
