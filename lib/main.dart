@@ -9,9 +9,16 @@ void main() {
       null,
       [
         NotificationChannel(
+          channelGroupKey: 'basic_channel_group',
           channelKey: 'basic_channel',
           channelName: 'Basic Notifications',
-          channelDescription: 'Test',
+          channelDescription: 'Notification channel of StudySync',
+          importance: NotificationImportance.Max,
+          defaultPrivacy: NotificationPrivacy.Public,
+          defaultRingtoneType: DefaultRingtoneType.Alarm,
+          locked: true,
+          enableVibration: true,
+          playSound: true,
         )
       ],
       debug: true
@@ -47,6 +54,16 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+  @override
+  void initState() {
+    AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
+      if (!isAllowed) {
+        AwesomeNotifications().requestPermissionToSendNotifications();
+      }
+    });
+    super.initState();
+  }
 
   TabBar get _tabBar => const TabBar(
       labelColor: Colors.amber,

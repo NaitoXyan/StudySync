@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:studysync/activityNotification.dart';
 import 'package:studysync/subjects.dart';
 
 class AddActivities extends StatelessWidget {
@@ -249,7 +250,6 @@ class _InputActivities extends State<InputActivities> {
 
                 //balik sa activity screen
                 onPressed: () {
-
                   //map sa tanan details brod
                   Map<String, String> activityDetails = {
                     'subject': _subjectController.text,
@@ -258,6 +258,13 @@ class _InputActivities extends State<InputActivities> {
                     'date': _dateController.text,
                     'time': _timeController.text,
                   };
+
+                  String dateDeadline = _dateController.text;
+                  String timeDeadline = _timeController.text;
+                  String stringDateTime = '$dateDeadline $timeDeadline';
+                  //covert from String to DateTime
+                  DateTime deadlineDateTime = DateFormat('d MMMM y HH:mm a').parse(stringDateTime);
+                  scheduleActivityNotif(deadlineDateTime);
 
                   Navigator.pop(context, activityDetails);
                 },
