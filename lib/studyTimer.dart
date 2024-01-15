@@ -76,15 +76,6 @@ class _StudyTimerScreenState extends State<StudyTimerScreen> {
   }
 
 ////////////////////////////////////////////////////////////////////////////
-  @override
-  void initState() {
-    AwesomeNotifications().isNotificationAllowed().then((isAllowed){
-      if (!isAllowed){
-        AwesomeNotifications().requestPermissionToSendNotifications();
-      }
-    });
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {

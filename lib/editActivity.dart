@@ -1,5 +1,7 @@
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:studysync/activityNotification.dart';
 import 'package:studysync/subjects.dart';
 
 class EditActivity extends StatefulWidget {
@@ -8,6 +10,7 @@ class EditActivity extends StatefulWidget {
   String description;
   String date;
   String time;
+  String id;
   int activityIndex;
 
   EditActivity({
@@ -17,6 +20,7 @@ class EditActivity extends StatefulWidget {
     required this.date,
     required this.time,
     required this.activityIndex,
+    required this.id,
     Key?  key
   }) : super(key: key);
 
@@ -61,6 +65,21 @@ class _EditActivityState extends State<EditActivity> {
         backgroundColor: const Color(0xff1E213D),
         appBar: AppBar(
           backgroundColor: const Color(0xff1E213D),
+          leading: BackButton(
+            onPressed: () {
+
+              Map<String, String> activityDetails = {
+                'subject': widget.subject,
+                'title': widget.title,
+                'description': widget.description,
+                'date': widget.date,
+                'time': widget.time,
+                'id': widget.id
+              };
+
+              Navigator.pop(context, activityDetails);
+            },
+          ),
           title: const Text('Edit Activity',
             style: TextStyle(
                 color: Colors.white,
@@ -98,7 +117,7 @@ class _EditActivityState extends State<EditActivity> {
                       onTap: () async {
                         _subjectController.text = await Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => Subjects()),
+                          MaterialPageRoute(builder: (context) => const Subjects()),
                         );
                       },
                       decoration: const InputDecoration(
@@ -259,10 +278,8 @@ class _EditActivityState extends State<EditActivity> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 15.0),
                       child: ElevatedButton(
-
                         //balik sa activity screen
                         onPressed: () {
-
                           //map sa tanan details
                           Map<String, String> activityDetails = {
                             'subject': _subjectController.text,
@@ -270,8 +287,22 @@ class _EditActivityState extends State<EditActivity> {
                             'description': _descriptionController.text,
                             'date': _dateController.text,
                             'time': _timeController.text,
+                            'id': widget.id,
                           };
 
+                          int intId = int.parse(widget.id);
+                          String dateDeadline = _dateController.text;
+                          String timeDeadline = _timeController.text;
+                          String stringDateTime = '$dateDeadline $timeDeadline';
+                          //covert from String to DateTime
+                          DateTime deadlineDateTime = DateFormat('d MMMM y HH:mm a').parse(stringDateTime);
+
+                          // delete notification
+                          AwesomeNotifications().cancel(intId);
+                          // add new notification
+                          scheduleActivityNotif(deadlineDateTime, widget.id);
+
+                          // return screen with Map value
                           Navigator.pop(context, activityDetails);
                         },
 

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
 
+  @override
   State<ScheduleScreen> createState() => _ScheduleScreenState();
 }
 
@@ -11,6 +12,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   var date = DateTime.now();
 
+  @override
   Widget build (BuildContext context) {
     return Column(
       children: [

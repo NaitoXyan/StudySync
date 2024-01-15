@@ -134,6 +134,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                             description: activitiesList[index]['description']  ?? 'null',
                             date: activitiesList[index]['date']  ?? 'null',
                             time: activitiesList[index]['time']  ?? 'null',
+                            id: activitiesList[index]['id'] ?? 'null',
                             activityIndex: index,
                           )),
                         );
@@ -169,16 +170,17 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                   final result = await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) {
-                        return AddActivities();
+                        return const AddActivities();
                       },
-                      settings: RouteSettings(name: 'AddActivities'),
+                      settings: const RouteSettings(name: 'AddActivities'),
                     )
                   );
 
-
-                  setState(() {
-                    activitiesList.add(result);
-                  });
+                  if (result != null) {
+                    setState(() {
+                      activitiesList.add(result);
+                    });
+                  }
 
                 },
                 style: ElevatedButton.styleFrom(

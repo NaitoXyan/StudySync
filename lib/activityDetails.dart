@@ -7,6 +7,7 @@ class ActivityDetails extends StatefulWidget {
   String description;
   String date;
   String time;
+  String id;
   int activityIndex;
 
   ActivityDetails({
@@ -15,6 +16,7 @@ class ActivityDetails extends StatefulWidget {
     required this.description,
     required this.date,
     required this.time,
+    required this.id,
     required this.activityIndex,
     Key?  key
   }) : super(key: key);
@@ -24,7 +26,15 @@ class ActivityDetails extends StatefulWidget {
 }
 
 class _ActivityDetailsState extends State<ActivityDetails> {
-  late final result;
+
+  Map<String, String> result =  {
+    'subject': '3mpty',
+    'title': '3mpty',
+    'description': '3mpty',
+    'date': '3mpty',
+    'time': '3mpty',
+  };
+
   @override
   Widget build (BuildContext context) {
     return Scaffold(
@@ -33,6 +43,19 @@ class _ActivityDetailsState extends State<ActivityDetails> {
         backgroundColor: const Color(0xff1E213D),
         leading: BackButton(
           onPressed: () {
+            Map<String, String> activityDetails = {
+              'subject': widget.subject,
+              'title': widget.title,
+              'description': widget.description,
+              'date': widget.date,
+              'time': widget.time,
+              'id': widget.id
+            };
+
+            if (result['subject'] == '3mpty') {
+              result = activityDetails;
+            }
+
             Navigator.pop(context, result);
           },
         ),
@@ -155,17 +178,19 @@ class _ActivityDetailsState extends State<ActivityDetails> {
                             )
                           ),
                           onPressed: () async {
+                            // expects Map<String, String> type
                             result = await Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => EditActivity(title: widget.title, subject: widget.subject, description: widget.description, date: widget.date, time: widget.time, activityIndex:  widget.activityIndex))
+                              MaterialPageRoute(builder: (context) => EditActivity(title: widget.title, subject: widget.subject, description: widget.description, date: widget.date, time: widget.time, activityIndex:  widget.activityIndex, id: widget.id,))
                             );
 
+                            // update info displayed
                             setState(() {
-                              widget.title = result['title'];
-                              widget.subject = result['subject'];
-                              widget.description = result['description'];
-                              widget.date = result['date'];
-                              widget.time = result['time'];
+                              widget.title = result['title'] ?? 'No Title';
+                              widget.subject = result['subject'] ??  'No Subject';
+                              widget.description = result['description'] ?? 'No description';
+                              widget.date = result['date'] ?? 'No date';
+                              widget.time = result['time'] ?? 'No time';
                             });
 
                           },

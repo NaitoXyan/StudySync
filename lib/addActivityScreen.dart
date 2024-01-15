@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:studysync/activityList.dart';
+import 'package:studysync/activityNotification.dart';
 import 'package:studysync/subjects.dart';
 
 class AddActivities extends StatelessWidget {
@@ -85,7 +87,7 @@ class _InputActivities extends State<InputActivities> {
               onTap: () async {
                 _subjectController.text = await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Subjects()),
+                  MaterialPageRoute(builder: (context) => const Subjects()),
                 );
               },
               decoration: const InputDecoration(
@@ -249,7 +251,6 @@ class _InputActivities extends State<InputActivities> {
 
                 //balik sa activity screen
                 onPressed: () {
-
                   //map sa tanan details brod
                   Map<String, String> activityDetails = {
                     'subject': _subjectController.text,
@@ -257,7 +258,17 @@ class _InputActivities extends State<InputActivities> {
                     'description': _descriptionController.text,
                     'date': _dateController.text,
                     'time': _timeController.text,
+                    'id': (activitiesList.length + 1).toString()
                   };
+
+                  String dateDeadline = _dateController.text;
+                  String timeDeadline = _timeController.text;
+                  String stringDateTime = '$dateDeadline $timeDeadline';
+                  //covert from String to DateTime
+                  DateTime deadlineDateTime = DateFormat('d MMMM y HH:mm a').parse(stringDateTime);
+
+                  // make notification when deadline
+                  scheduleActivityNotif(deadlineDateTime, activityDetails['id']);
 
                   Navigator.pop(context, activityDetails);
                 },
