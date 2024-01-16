@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:studysync/activityDetails.dart';
 import 'package:studysync/addActivityScreen.dart';
-import 'package:studysync/activityList.dart';
+import 'package:studysync/allList.dart';
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
@@ -42,7 +42,9 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
 
   @override
   void initState() {
+    // repeat one animation
     repeatOnce();
+    // timer to  update activities' color
     timer = Timer.periodic(const Duration(minutes: 1), (timer) {
       setState(() {
         currentTime = DateTime.now();

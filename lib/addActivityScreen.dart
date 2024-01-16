@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:studysync/activityList.dart';
+import 'package:studysync/allList.dart';
 import 'package:studysync/activityNotification.dart';
 import 'package:studysync/subjects.dart';
 
