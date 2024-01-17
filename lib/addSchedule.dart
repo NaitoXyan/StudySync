@@ -220,11 +220,12 @@ class _InputScheduleState extends State<InputSchedule> {
 
                 //balik sa activity screen
                 onPressed: () {
-                  Map<String, String> scheduleMap = {
+                  Map<String, dynamic> scheduleMap = {
                     'subject': _subjectController.text,
                     'day': _dayController.text,
                     'timeIn': _timeInController.text,
-                    'timeOut': _timeOutController.text
+                    'timeOut': _timeOutController.text,
+                    'selected': false,
                   };
 
                   Navigator.pop(context, scheduleMap);

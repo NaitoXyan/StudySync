@@ -10,46 +10,10 @@ class Subjects extends StatefulWidget {
 
 class _SubjectsState extends State<Subjects> {
   //main subject screen
-  AddSubject addSubjectInstance = AddSubject();
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-      child: Scaffold(
-          body: Column(
-            children: [
-              ElevatedButton(onPressed: () {
-                String sendSubjectToPrevScreen = addSubjectInstance.subjectCardKey;
-
-                Navigator.pop(context, sendSubjectToPrevScreen);
-              },
-                  child: const Text('go back')
-              ),
-
-              addSubjectInstance,
-            ],
-          )
-      ),
-    );
-  }
-}
-
-class AddSubject extends StatefulWidget {
-  String subjectCardKey = '';
-
-  AddSubject ({Key ? key}) : super(key: key);
-
-  @override
-  State<AddSubject> createState() => _AddSubject();
-}
-
-class _AddSubject extends State<AddSubject> {
-  //this part kay pag add, remove subjects
   final subjectController = TextEditingController();
-
   List<String> subjectList = [];
   int? subjectIndex;
+  String subjectCardKey = '';
 
   @override
   void initState() {
@@ -65,44 +29,81 @@ class _AddSubject extends State<AddSubject> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        subjectListBuilder(),
-        addSubjectFillUp(),
-      ],
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        backgroundColor: const Color(0xff1E213D),
+        appBar: AppBar(
+          backgroundColor: const Color(0xff1E213D),
+          title: const Text('Subjects',
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 30,
+                fontWeight: FontWeight.bold
+            ),
+          ),
+          leading: BackButton(
+            onPressed: () {
+              String sendSubjectToPrevScreen = subjectCardKey;
+              Navigator.pop(context, sendSubjectToPrevScreen);
+            },
+          ),
+        ),
+
+        body: Column(
+          children: [
+            Flexible(
+              flex: 5,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 30),
+                child: Container(
+                  height: 350,
+                  decoration: BoxDecoration(
+                      color: Colors.amber,
+                      borderRadius: BorderRadius.circular(12)
+                  ),
+                  child: subjectListBuilder()
+                ),
+              ),
+            ),
+
+            Flexible(
+              flex: 5,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 30),
+                child: addSubjectFillUp(),
+              ),
+            ),
+          ],
+        )
+      ),
     );
   }
 
   Widget subjectListBuilder() {
-    return SingleChildScrollView(
-      child:
-      SizedBox(
-        height: 300,
-        child:
-        ListView.builder(
-          scrollDirection: Axis.vertical,
-          shrinkWrap: true,
-          itemCount: subjectList.length,
+    return ListView.builder(
+      scrollDirection: Axis.vertical,
+      shrinkWrap: true,
+      itemCount: subjectList.length,
 
-          itemBuilder: (context, index) {
-            return Card(
-              color: subjectIndex == index ? Colors.blue: null,
-              child: ListTile(
-                onTap: () {
-                  setState(() {
-                    subjectIndex = index;
-                    widget.subjectCardKey = subjectList[index];
-                  });
-                },
+      itemBuilder: (context, index) {
+        return Card(
+          color: subjectIndex == index ? Colors.blue: null,
+          child: ListTile(
+            onTap: () {
+              setState(() {
+                subjectIndex = index;
+                subjectCardKey = subjectList[index];
+              });
+            },
 
-                leading: const Icon(Icons.book_rounded),
-                title: Text(subjectList[index]),
-                trailing: trailingButton(index),
-              ),
-            );
-          },
-        ),
-      ),
+            leading: const Icon(Icons.book_rounded),
+            title: Text(subjectList[index]),
+            trailing: trailingButton(index),
+          ),
+        );
+      },
     );
   }
 
@@ -116,16 +117,16 @@ class _AddSubject extends State<AddSubject> {
         },
 
         itemBuilder: (BuildContext context) =>
-          <PopupMenuEntry<ListTileTitleAlignment>>[
-            PopupMenuItem<ListTileTitleAlignment>(
-              onTap:() {
-                subjectDelete(index);
-              },
-              value: ListTileTitleAlignment.center,
-              child: const Text("delete"),
+        <PopupMenuEntry<ListTileTitleAlignment>>[
+          PopupMenuItem<ListTileTitleAlignment>(
+            onTap:() {
+              subjectDelete(index);
+            },
+            value: ListTileTitleAlignment.center,
+            child: const Text("delete"),
 
-            )
-          ]
+          )
+        ]
     );
   }
 
@@ -134,17 +135,46 @@ class _AddSubject extends State<AddSubject> {
       children: [
         TextFormField(
           controller: subjectController,
+          style: const TextStyle(
+            color: Colors.white
+          ),
           decoration: const InputDecoration(
-            border: UnderlineInputBorder(),
             labelText: 'Enter subject Title',
+            labelStyle: TextStyle(
+              color: Colors.white
+            ),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(
+                color: Colors.white
+              )
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(
+                color: Colors.white
+              )
+            )
           ),
         ),
 
-        ElevatedButton(
-            onPressed: () {
-              subjectListSet();
-            }, 
-            child: const Text('add subject'))
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          child: SizedBox(
+            width: 250,
+            height: 70,
+            child: ElevatedButton(
+                onPressed: () {
+                  subjectListSet();
+                },
+                child: const Text('add subject',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w600
+                  ),
+                )
+            ),
+          ),
+        )
       ],
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:studysync/addSchedule.dart';
 import 'package:studysync/allList.dart';
+import 'package:studysync/allSchedule.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -39,6 +40,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
   @override
   void initState() {
     repeatOnce();
+    setState(() {
+      getSchedule();
+    });
     super.initState();
   }
 
@@ -123,7 +127,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
                   height: 90,
                   child: ElevatedButton(
                     onPressed: () async {
-
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AllSchedules())
+                      );
+                      setState(() {
+                        scheduleList;
+                      });
                     },
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Color(buttonColor()),
@@ -212,13 +222,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
       child: ListView.builder(
         itemCount: scheduleList.length,
         itemBuilder: (context, index) {
-          if (scheduleList[index]['day'] == dayNow) {
+          if (scheduleList[index]["day"] == dayNow) {
             return Card(
               child: ListTile(
-                title: Text(scheduleList[index]['subject'] ?? 'No Subject'),
+                title: Text('${scheduleList[index]["subject"] ?? 'No Subject'}'),
                 trailing: Text(
                   //splits it into two lines = \n
-                    '${scheduleList[index]['timeIn'] ?? 'No TimeIn'} - ${scheduleList[index]['timeOut'] ?? 'No TimeOut'}'
+                    '${scheduleList[index]["time_in"] ?? 'No TimeIn'} - ${scheduleList[index]["time_out"] ?? 'No TimeOut'}'
                 ),
                 onTap: () {
 
