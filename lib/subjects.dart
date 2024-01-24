@@ -1,5 +1,31 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'allList.dart';
+
+// serves as a data model that represents the structure of an album object.
+class Album {
+  late bool success;
+  late String message;
+
+  Album({
+    required this.success,
+    required this.message
+  });
+
+  // json to album convert thingie
+  factory Album.fromJson(Map<String, dynamic> json) {
+    // using pattern matching
+    return switch (json) {
+      {
+      'success': bool success,
+      'message': String message
+      } => Album(success: success, message: message),
+      _ => throw const FormatException('Failed to load album')
+    };
+  }
+}
 
 class Subjects extends StatefulWidget {
   const Subjects({super.key});
@@ -11,20 +37,93 @@ class Subjects extends StatefulWidget {
 class _SubjectsState extends State<Subjects> {
   //main subject screen
   final subjectController = TextEditingController();
-  List<String> subjectList = [];
+  final FocusNode _focusNode = FocusNode();
   int? subjectIndex;
   String subjectCardKey = '';
+  late int subjectIdKey;
+  late Future subjectFuture;
+
+  // variable with Future<Album> type
+  Future<Album>? futureAlbum;
 
   @override
   void initState() {
+    subjectFuture = getSubject();
     super.initState();
-    subjectListGet();
+    // subjectListGet();
   }
 
   @override
   void dispose () {
     subjectController.dispose();
     super.dispose();
+  }
+
+  Future<List<dynamic>> getSubject() async {
+    var url = Uri.parse('http://10.0.2.2:8000/api/subject/$userId');
+    var response = await http.get(url);
+
+    print(jsonDecode(response.body));
+    subjectList = jsonDecode(response.body);
+
+    print(subjectList);
+    return subjectList;
+  }
+
+  Future<void> refreshSubjectList() async {
+    // Call getSubject to refresh the subjectList
+    var updatedSubjectList = await getSubject();
+    setState(() {
+      subjectList = updatedSubjectList;
+    });
+  }
+
+  Future<Album> createSubject(String subject_title, int user_id) async {
+    var url = Uri.parse('http://10.0.2.2:8000/api/addSubject');
+    final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic> {
+          'subject_title': subject_title,
+          'user_id': userId
+        })
+    );
+
+    if (response.statusCode == 200) {
+      // If the server did return a 201 CREATED response,
+      // then parse the JSON.
+      // Call refreshSubjectList to update the UI
+      await refreshSubjectList();
+      return Album.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    }
+
+    else {
+      // If the server did not return a 201 CREATED response,
+      // then throw an exception.
+      throw Exception('Failed to create album.');
+    }
+  }
+
+  Future<void> deleteSubject(int subjectId) async {
+    var url = Uri.parse('http://10.0.2.2:8000/api/subject/$subjectId');
+
+    try {
+      var response = await http.delete(url);
+
+      if (response.statusCode == 200) {
+        print('Subject deleted successfully.');
+        setState(() {
+          // Remove the deleted subject from the subjectList
+          subjectList.removeWhere((subject) => subject['id'] == subjectId);
+        });
+      } else {
+        print('Failed to delete subject. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
   }
 
   @override
@@ -45,8 +144,12 @@ class _SubjectsState extends State<Subjects> {
           ),
           leading: BackButton(
             onPressed: () {
-              String sendSubjectToPrevScreen = subjectCardKey;
-              Navigator.pop(context, sendSubjectToPrevScreen);
+              Map<String, dynamic> passValues = {
+                'id': subjectIdKey,
+                'title': subjectCardKey
+              };
+              // String sendSubjectToPrevScreen = subjectCardKey;
+              Navigator.pop(context, passValues);
             },
           ),
         ),
@@ -82,28 +185,46 @@ class _SubjectsState extends State<Subjects> {
   }
 
   Widget subjectListBuilder() {
-    return ListView.builder(
-      scrollDirection: Axis.vertical,
-      shrinkWrap: true,
-      itemCount: subjectList.length,
+    return FutureBuilder(
+      future: subjectFuture,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return ListView.builder(
+            scrollDirection: Axis.vertical,
+            shrinkWrap: true,
+            itemCount: subjectList.length,
 
-      itemBuilder: (context, index) {
-        return Card(
-          color: subjectIndex == index ? Colors.blue: null,
-          child: ListTile(
-            onTap: () {
-              setState(() {
-                subjectIndex = index;
-                subjectCardKey = subjectList[index];
-              });
+            itemBuilder: (context, index) {
+              return Card(
+                color: subjectIndex == index ? Colors.blue: null,
+                child: ListTile(
+                  onTap: () {
+                    setState(() {
+                      subjectIndex = index;
+                      subjectCardKey = subjectList[index]['title'];
+                      subjectIdKey = subjectList[index]['id'];
+                    });
+                  },
+
+                  leading: const Icon(Icons.book_rounded),
+                  title: Text(subjectList[index]['title']),
+                  trailing: trailingButton(index),
+                ),
+              );
             },
-
-            leading: const Icon(Icons.book_rounded),
-            title: Text(subjectList[index]),
-            trailing: trailingButton(index),
-          ),
-        );
-      },
+          );
+        }
+        else if (snapshot.hasError) {
+          return Text('${snapshot.error}');
+        }
+        else {
+          return const Center(
+            child: SizedBox(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+      }
     );
   }
 
@@ -120,7 +241,9 @@ class _SubjectsState extends State<Subjects> {
         <PopupMenuEntry<ListTileTitleAlignment>>[
           PopupMenuItem<ListTileTitleAlignment>(
             onTap:() {
-              subjectDelete(index);
+              setState(() {
+                deleteSubject(subjectList[index]['id']);
+              });
             },
             value: ListTileTitleAlignment.center,
             child: const Text("delete"),
@@ -135,6 +258,7 @@ class _SubjectsState extends State<Subjects> {
       children: [
         TextFormField(
           controller: subjectController,
+          focusNode: _focusNode,
           style: const TextStyle(
             color: Colors.white
           ),
@@ -163,7 +287,13 @@ class _SubjectsState extends State<Subjects> {
             height: 70,
             child: ElevatedButton(
                 onPressed: () {
-                  subjectListSet();
+
+                  setState(() {
+                    futureAlbum = createSubject(subjectController.text, userId);
+                    // Clear the text field
+                    subjectController.clear();
+                  });
+
                 },
                 child: const Text('add subject',
                   style: TextStyle(
@@ -179,31 +309,31 @@ class _SubjectsState extends State<Subjects> {
     );
   }
 
-  Future <void> subjectListSet() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    setState(() {
-      subjectList.add(subjectController.text);
-      prefs.setStringList('subjects', subjectList);
-    });
-
-    subjectController.clear();
-  }
-
-  Future <void> subjectListGet() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    setState(() {
-      subjectList = prefs.getStringList('subjects') ?? [];
-    });
-  }
-
-  Future <void> subjectDelete(int index) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    setState(() {
-      subjectList.removeAt(index);
-      prefs.setStringList('subjects', subjectList);
-    });
-  }
+  // Future <void> subjectListSet() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //
+  //   setState(() {
+  //     subjectList.add(subjectController.text);
+  //     prefs.setStringList('subjects', subjectList);
+  //   });
+  //
+  //   subjectController.clear();
+  // }
+  //
+  // Future <void> subjectListGet() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //
+  //   setState(() {
+  //     subjectList = prefs.getStringList('subjects') ?? [];
+  //   });
+  // }
+  //
+  // Future <void> subjectDelete(int index) async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //
+  //   setState(() {
+  //     subjectList.removeAt(index);
+  //     prefs.setStringList('subjects', subjectList);
+  //   });
+  // }
 }

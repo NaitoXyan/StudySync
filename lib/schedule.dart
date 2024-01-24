@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:studysync/addSchedule.dart';
 import 'package:studysync/allList.dart';
 import 'package:studysync/allSchedule.dart';
+import 'package:http/http.dart' as http;
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -14,6 +16,8 @@ class ScheduleScreen extends StatefulWidget {
 class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProviderStateMixin {
 
   var date = DateTime.now();
+  late var result;
+  late Future scheduleFuture;
 
   // defining the Animation Controller
   late final AnimationController _animationController = AnimationController(
@@ -39,10 +43,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
 
   @override
   void initState() {
+    result = '';
+    scheduleFuture = getSchedule();
     repeatOnce();
-    setState(() {
-      getSchedule();
-    });
     super.initState();
   }
 
@@ -50,6 +53,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<List<dynamic>> getSchedule() async {
+    var url = Uri.parse('http://10.0.2.2:8000/api/schedules/$userId/$result');
+    var response = await http.get(url);
+
+    scheduleList = jsonDecode(response.body);
+
+    print(scheduleList);
+    return scheduleList;
   }
 
   @override
@@ -95,7 +108,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
                   height: 90,
                   child: ElevatedButton(
                     onPressed: () async {
-                      final result = await Navigator.push(
+                      result = await Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => AddSchedule())
                       );
@@ -219,28 +232,45 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
 
     return Expanded(
       flex: 9,
-      child: ListView.builder(
-        itemCount: scheduleList.length,
-        itemBuilder: (context, index) {
-          if (scheduleList[index]["day"] == dayNow) {
-            return Card(
-              child: ListTile(
-                title: Text('${scheduleList[index]["subject"] ?? 'No Subject'}'),
-                trailing: Text(
-                  //splits it into two lines = \n
-                    '${scheduleList[index]["time_in"] ?? 'No TimeIn'} - ${scheduleList[index]["time_out"] ?? 'No TimeOut'}'
-                ),
-                onTap: () {
+      child: FutureBuilder(
+        future: scheduleFuture,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return ListView.builder(
+              itemCount: snapshot.data.length,
+              itemBuilder: (context, index) {
+                if (snapshot.data[index]["day"] == dayNow) {
+                  return Card(
+                    child: ListTile(
+                      title: Text('${snapshot.data[index]["subject_id"] ?? 'No Subject'}'),
+                      trailing: Text(
+                        //splits it into two lines = \n
+                          '${snapshot.data[index]["time_in"] ?? 'No TimeIn'} - ${snapshot.data[index]["time_out"] ?? 'No TimeOut'}'
+                      ),
+                      onTap: () {
 
-                },
+                      },
+                    ),
+                  );
+                }
+                else {
+                  return Container();
+                }
+              },
+            );
+          }
+          else if (snapshot.hasError) {
+            return Text('${snapshot.error}');
+          }
+          else {
+            return const Center(
+              child: SizedBox(
+                child: CircularProgressIndicator(),
               ),
             );
           }
-          else {
-            return Container();
-          }
         },
-      ),
+      )
     );
   }
 }

@@ -83,10 +83,10 @@ class _AllSchedulesState extends State<AllSchedules> {
                   itemBuilder: (context, index) {
                     return Card(
                       child: ListTile(
-                        title: Text(scheduleList[index]['subject'] ?? 'No Subject'),
+                        title: Text(scheduleList[index]['subject_id'] ?? 'No Subject'),
                         trailing: Text(
                           //splits it into two lines = \n
-                            '${scheduleList[index]['timeIn'] ?? 'No TimeIn'} - ${scheduleList[index]['timeOut'] ?? 'No TimeOut'}'
+                            '${scheduleList[index]['time_in'] ?? 'No TimeIn'} - ${scheduleList[index]['time_out'] ?? 'No TimeOut'}'
                         ),
                         onTap: () {
                           Navigator.push(
