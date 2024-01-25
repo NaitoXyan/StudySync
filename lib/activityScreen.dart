@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:studysync/activityDetails.dart';
 import 'package:studysync/addActivityScreen.dart';
 import 'package:studysync/allList.dart';
+import 'package:http/http.dart' as http;
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
@@ -17,6 +19,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
 
   DateTime currentTime = DateTime.now();
   Timer? timer;
+  late Future activitiesFuture;
 
   // defining the Animation Controller
   late final AnimationController _animationController = AnimationController(
@@ -50,6 +53,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
         currentTime = DateTime.now();
       });
     });
+    activitiesFuture = getActivity();
     super.initState();
   }
 
@@ -62,8 +66,8 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
 
   //change color depende sa deadline
   deadline(index) {
-    String? stringDate = activitiesList[index]['date'];
-    String? stringTime = activitiesList[index]['time'];
+    String? stringDate = activitiesList[index]['deadline_day'];
+    String? stringTime = activitiesList[index]['deadline_time'];
 
     //combine the two
     String stringDateTime = '$stringDate $stringTime';
@@ -87,6 +91,16 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
     else if (differenceDates >= 0) {
       return 0xFFFF6258;
     }
+  }
+
+  Future<List<dynamic>> getActivity() async {
+    var url = Uri.parse('http://10.0.2.2:8000/api/user/$userId/activities');
+    var response = await http.get(url);
+
+    activitiesList = jsonDecode(response.body);
+
+    print(activitiesList);
+    return scheduleList;
   }
 
   @override
@@ -115,45 +129,56 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                 ]
               ),
 
-              child: ListView.builder(
-                itemCount: activitiesList.length,
-                itemBuilder: (context, index) {
-                  return Card(
-                    color: Color(deadline(index)),
-                    child: ListTile(
-                      title: Text(activitiesList[index]['title'] ?? 'No Subject'),
-                      subtitle: Text(activitiesList[index]['subject'] ?? 'No Title'),
-                      trailing: Text(
-                        //splits it into two lines = \n
-                        '${activitiesList[index]['date'] ?? 'No Date'} \n${activitiesList[index]['time'] ?? 'No Time'}'
-                      ),
-                      onTap: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => ActivityDetails(
-                            title: activitiesList[index]['title'] ?? 'null',
-                            subject: activitiesList[index]['subject']  ?? 'null',
-                            description: activitiesList[index]['description']  ?? 'null',
-                            date: activitiesList[index]['date']  ?? 'null',
-                            time: activitiesList[index]['time']  ?? 'null',
-                            id: activitiesList[index]['id'] ?? 'null',
-                            activityIndex: index,
-                          )),
-                        );
+              child: FutureBuilder(
+                future: activitiesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return ListView.builder(
+                      itemCount: activitiesList.length,
+                      itemBuilder: (context, index) {
+                        return Card(
+                          color: Color(deadline(index)),
+                          child: ListTile(
+                            title: Text(activitiesList[index]['activity_title'] ?? 'No Subject'),
+                            subtitle: Text(activitiesList[index]['subject_title'] ?? 'No Title'),
+                            trailing: Text(
+                              //splits it into two lines = \n
+                                '${activitiesList[index]['deadline_day'] ?? 'No Date'} \n${activitiesList[index]['deadline_time'] ?? 'No Time'}'
+                            ),
+                            onTap: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => ActivityDetails(
+                                  title: activitiesList[index]['activity_title'] ?? 'null',
+                                  subject: activitiesList[index]['subject_title']  ?? 'null',
+                                  description: activitiesList[index]['description']  ?? 'null',
+                                  date: activitiesList[index]['deadline_day']  ?? 'null',
+                                  time: activitiesList[index]['deadline_time']  ?? 'null',
+                                  id: activitiesList[index]['activity_id'] ?? 'null',
+                                )),
+                              );
 
-                        setState(() {
-                          //if result kay int, delete item using index
-                          if (result is int) {
-                            activitiesList.removeAt(result);
-                          }
-                          //else change item using index
-                          else {
-                            activitiesList[index] = result;
-                          }
-                        });
+                              if (result != null) {
+                                setState(() {
+                                  activitiesFuture = getActivity();
+                                });
+                              }
+                            },
+                          ),
+                        );
                       },
-                    ),
-                  );
+                    );
+                  }
+                  else if (snapshot.hasError) {
+                    return Text('${snapshot.error}');
+                  }
+                  else {
+                    return const Center(
+                      child: SizedBox(
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
                 },
               )
 
@@ -180,7 +205,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
 
                   if (result != null) {
                     setState(() {
-                      activitiesList.add(result);
+                      activitiesFuture = getActivity();
                     });
                   }
 

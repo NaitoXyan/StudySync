@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:studysync/editActivity.dart';
+
+import 'allList.dart';
 
 class ActivityDetails extends StatefulWidget {
   String title;
@@ -7,8 +11,7 @@ class ActivityDetails extends StatefulWidget {
   String description;
   String date;
   String time;
-  String id;
-  int activityIndex;
+  int id;
 
   ActivityDetails({
     required this.title,
@@ -17,7 +20,6 @@ class ActivityDetails extends StatefulWidget {
     required this.date,
     required this.time,
     required this.id,
-    required this.activityIndex,
     Key?  key
   }) : super(key: key);
 
@@ -25,15 +27,66 @@ class ActivityDetails extends StatefulWidget {
   State<ActivityDetails> createState() => _ActivityDetailsState();
 }
 
+class Album {
+  late bool success;
+  late String message;
+
+  Album({
+    required this.success,
+    required this.message
+  });
+
+  // json to album convert thingie
+  factory Album.fromJson(Map<String, dynamic> json) {
+    // using pattern matching
+    return switch (json) {
+      {
+      'success': bool success,
+      'message': String message
+      } => Album(success: success, message: message),
+      _ => throw const FormatException('Failed to load album')
+    };
+  }
+}
+
 class _ActivityDetailsState extends State<ActivityDetails> {
 
-  Map<String, String> result =  {
-    'subject': '3mpty',
-    'title': '3mpty',
-    'description': '3mpty',
-    'date': '3mpty',
-    'time': '3mpty',
-  };
+  late var result;
+  late Future activitiesFuture;
+
+  Future<List<dynamic>> getActivity() async {
+    var url = Uri.parse('http://10.0.2.2:8000/api/user/$userId/activities');
+    var response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      activitiesList = jsonDecode(response.body) as List<dynamic>;
+      print(activitiesList);
+      return activitiesList;
+    }
+
+    else {
+      print('Failed to get activities. Status code: ${response.statusCode}');
+      throw Exception('Failed to update album.');
+    }
+  }
+
+  Future<Album> deleteActivity(int activityId) async {
+    var url = Uri.parse('http://10.0.2.2:8000/api/deleteActivity/$activityId');
+
+    var response = await http.delete(url);
+
+    if (response.statusCode == 200) {
+      print('Schedule deleted successfully.');
+      getActivity();
+
+      return Album.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    }
+
+    else {
+      print('Failed to delete schedule. Status code: ${response.statusCode}');
+      throw Exception('Failed to update album.');
+    }
+  }
 
   @override
   Widget build (BuildContext context) {
@@ -43,20 +96,7 @@ class _ActivityDetailsState extends State<ActivityDetails> {
         backgroundColor: const Color(0xff1E213D),
         leading: BackButton(
           onPressed: () {
-            Map<String, String> activityDetails = {
-              'subject': widget.subject,
-              'title': widget.title,
-              'description': widget.description,
-              'date': widget.date,
-              'time': widget.time,
-              'id': widget.id
-            };
-
-            if (result['subject'] == '3mpty') {
-              result = activityDetails;
-            }
-
-            Navigator.pop(context, result);
+            Navigator.pop(context);
           },
         ),
       ),
@@ -181,17 +221,21 @@ class _ActivityDetailsState extends State<ActivityDetails> {
                             // expects Map<String, String> type
                             result = await Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => EditActivity(title: widget.title, subject: widget.subject, description: widget.description, date: widget.date, time: widget.time, activityIndex:  widget.activityIndex, id: widget.id,))
+                              MaterialPageRoute(builder: (context) => EditActivity(title: widget.title, subject: widget.subject, description: widget.description, date: widget.date, time: widget.time, id: widget.id,))
                             );
 
                             // update info displayed
-                            setState(() {
-                              widget.title = result['title'] ?? 'No Title';
-                              widget.subject = result['subject'] ??  'No Subject';
-                              widget.description = result['description'] ?? 'No description';
-                              widget.date = result['date'] ?? 'No date';
-                              widget.time = result['time'] ?? 'No time';
-                            });
+                            if(result != null && result is Map<String, dynamic>) {
+                              setState(() {
+                                print(result);
+                                activitiesFuture = getActivity();
+                                widget.title = result['activity_title'];
+                                widget.subject = result['subject_title'];
+                                widget.description = result['description'];
+                                widget.date = result['deadline_day'];
+                                widget.time = result['deadline_time'];
+                              });
+                            }
 
                           },
                           child: const Text('Edit Activity',
@@ -225,7 +269,10 @@ class _ActivityDetailsState extends State<ActivityDetails> {
                             )
                           ),
                           onPressed: () {
-                            Navigator.pop(context, widget.activityIndex);
+                            setState(() {
+                              activitiesFuture = deleteActivity(widget.id);
+                            });
+                            Navigator.pop(context);
                           },
                           child: const Text('Mark as Done',
                             style: TextStyle(

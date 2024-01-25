@@ -56,7 +56,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
   }
 
   Future<List<dynamic>> getSchedule() async {
-    var url = Uri.parse('http://10.0.2.2:8000/api/schedules/$userId/$result');
+    var url = Uri.parse('http://10.0.2.2:8000/api/user/$userId/schedules');
     var response = await http.get(url);
 
     scheduleList = jsonDecode(response.body);
@@ -115,7 +115,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
 
                       if (result != null) {
                         setState(() {
-                          scheduleList.add(result);
+                          scheduleFuture = getSchedule();
                         });
                       }
                     },
@@ -145,7 +145,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
                         MaterialPageRoute(builder: (context) => AllSchedules())
                       );
                       setState(() {
-                        scheduleList;
+                        scheduleFuture = getSchedule();
                       });
                     },
                     style: ElevatedButton.styleFrom(
@@ -239,23 +239,25 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
             return ListView.builder(
               itemCount: snapshot.data.length,
               itemBuilder: (context, index) {
-                if (snapshot.data[index]["day"] == dayNow) {
-                  return Card(
-                    child: ListTile(
-                      title: Text('${snapshot.data[index]["subject_id"] ?? 'No Subject'}'),
-                      trailing: Text(
-                        //splits it into two lines = \n
-                          '${snapshot.data[index]["time_in"] ?? 'No TimeIn'} - ${snapshot.data[index]["time_out"] ?? 'No TimeOut'}'
-                      ),
-                      onTap: () {
+               if (snapshot.data.length > 0) {
+                 if (snapshot.data[index]["day"] == dayNow) {
+                   return Card(
+                     child: ListTile(
+                       title: Text('${snapshot.data[index]["subject_title"] ?? 'No Subject'}'),
+                       trailing: Text(
+                         //splits it into two lines = \n
+                           '${snapshot.data[index]["time_in"] ?? 'No TimeIn'} - ${snapshot.data[index]["time_out"] ?? 'No TimeOut'}'
+                       ),
+                       onTap: () {
 
-                      },
-                    ),
-                  );
-                }
-                else {
-                  return Container();
-                }
+                       },
+                     ),
+                   );
+                 }
+                 else {
+                   return Container();
+                 }
+               }
               },
             );
           }
