@@ -2,11 +2,9 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 
 scheduleActivityNotif(deadlineDateTime, activityId) async {
 
-  int activityIdInt = int.parse(activityId);
-
   await AwesomeNotifications().createNotification(
     content: NotificationContent(
-      id: activityIdInt,
+      id: activityId,
       channelKey: 'basic_channel',
       title: 'Activity Overdue',
       body: 'Activity went past deadline, check app for details',

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:studysync/activityScreen.dart';
+import 'package:studysync/openingScreen.dart';
 import 'package:studysync/schedule.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:studysync/studyTimer.dart';
+import 'package:studysync/subjects.dart';
 
 void main() {
   AwesomeNotifications().initialize(
@@ -42,7 +44,7 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const MyHomePage(),
+      home: const OpeningScreen(),
     );
   }
 }
@@ -100,6 +102,47 @@ class _MyHomePageState extends State<MyHomePage> {
              child: _tabBar,
            ),
          )
+       ),
+
+       drawer: Drawer(
+         // Add a ListView to the drawer. This ensures the user can scroll
+         // through the options in the drawer if there isn't enough vertical
+         // space to fit everything.
+         child: ListView(
+           //Remove padding from the ListView.
+           padding: EdgeInsets.zero,
+           children: [
+
+             const SizedBox(
+               height: 90,
+               child: DrawerHeader(
+                 decoration: BoxDecoration(
+                   color: Colors.blue,
+                 ),
+                 child: Text('Navigate',
+                   style: TextStyle(
+                       fontWeight: FontWeight.w600,
+                       fontSize: 22,
+                       color: Colors.black
+                   ),
+                 ),
+               ),
+             ),
+
+             ListTile(
+               title: const Text('Subjects'),
+
+               onTap: () {
+
+                 Navigator.push(
+                   context,
+                   MaterialPageRoute(builder: (context) => Subjects())
+                 );
+
+               },
+             ),
+           ],
+         ),
        ),
 
        body: const TabBarView(children: [

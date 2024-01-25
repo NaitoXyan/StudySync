@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:studysync/allList.dart';
 import 'package:studysync/activityNotification.dart';
 import 'package:studysync/subjects.dart';
+import 'package:http/http.dart' as http;
 
 class AddActivities extends StatelessWidget {
   const AddActivities({super.key});
@@ -31,7 +34,28 @@ class AddActivities extends StatelessWidget {
       ),
     );
   }
+}
 
+class Album {
+  late bool success;
+  late String message;
+
+  Album({
+    required this.success,
+    required this.message
+  });
+
+  // json to album convert thingie
+  factory Album.fromJson(Map<String, dynamic> json) {
+    // using pattern matching
+    return switch (json) {
+      {
+      'success': bool success,
+      'message': String message
+      } => Album(success: success, message: message),
+      _ => throw const FormatException('Failed to load album')
+    };
+  }
 }
 
 class InputActivities extends StatefulWidget {
@@ -48,6 +72,8 @@ class _InputActivities extends State<InputActivities> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
+  Future<Album>? futureAddActivity;
+  late Map<String, dynamic> result;
 
   @override
   void dispose() {
@@ -57,6 +83,40 @@ class _InputActivities extends State<InputActivities> {
     _dateController.dispose();
     _timeController.dispose();
     super.dispose();
+  }
+
+  Future<Album> createActivity(String activity_title, String description, String deadline_day, String deadline_time, int subject_id) async {
+    try {
+      var url = Uri.parse('http://10.0.2.2:8000/api/addActivity');
+      final response = await http.post(
+          url,
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode(<String, dynamic> {
+            'activity_title': activity_title,
+            'description': description,
+            'deadline_day': deadline_day,
+            'deadline_time': deadline_time,
+            'subject_id': subject_id
+          })
+      );
+
+      if (response.statusCode == 200) {
+        // If the server did return a 200 OK response,
+        // then parse the JSON.
+        return Album.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+      } else {
+        // If the server did not return a 200 OK response,
+        // throw an exception with the status code and response body.
+        throw Exception('Failed to create album. Status code: ${response.statusCode}, Response body: ${response.body}');
+      }
+    } catch (e) {
+      // Catch any exceptions that occur during the process.
+      print('Error in createSchedule: $e');
+      // Re-throw the exception to propagate it further.
+      throw e;
+    }
   }
 
   @override
@@ -85,10 +145,12 @@ class _InputActivities extends State<InputActivities> {
               controller: _subjectController,
               readOnly: true,
               onTap: () async {
-                _subjectController.text = await Navigator.push(
+                result = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const Subjects()),
                 );
+
+                _subjectController.text = result['title'];
               },
               decoration: const InputDecoration(
                   filled: true,
@@ -242,7 +304,7 @@ class _InputActivities extends State<InputActivities> {
             ),
           ),
 
-          //add schedule button
+          //add activity button
           SizedBox(
             height: 100,
             child: Padding(
@@ -251,15 +313,7 @@ class _InputActivities extends State<InputActivities> {
 
                 //balik sa activity screen
                 onPressed: () {
-                  //map sa tanan details brod
-                  Map<String, String> activityDetails = {
-                    'subject': _subjectController.text,
-                    'title': _titleController.text,
-                    'description': _descriptionController.text,
-                    'date': _dateController.text,
-                    'time': _timeController.text,
-                    'id': (activitiesList.length + 1).toString()
-                  };
+                  futureAddActivity = createActivity(_titleController.text, _descriptionController.text, _dateController.text, _timeController.text, result['id']);
 
                   String dateDeadline = _dateController.text;
                   String timeDeadline = _timeController.text;
@@ -268,9 +322,9 @@ class _InputActivities extends State<InputActivities> {
                   DateTime deadlineDateTime = DateFormat('d MMMM y HH:mm a').parse(stringDateTime);
 
                   // make notification when deadline
-                  scheduleActivityNotif(deadlineDateTime, activityDetails['id']);
+                  scheduleActivityNotif(deadlineDateTime, result['id']);
 
-                  Navigator.pop(context, activityDetails);
+                  Navigator.pop(context, result['id']);
                 },
 
                 style: ElevatedButton.styleFrom(

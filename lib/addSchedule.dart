@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:studysync/subjects.dart';
@@ -30,7 +32,28 @@ class AddSchedule extends StatelessWidget {
       ),
     );
   }
+}
 
+class Album {
+  late bool success;
+  late String message;
+
+  Album({
+    required this.success,
+    required this.message
+  });
+
+  // json to album convert thingie
+  factory Album.fromJson(Map<String, dynamic> json) {
+    // using pattern matching
+    return switch (json) {
+      {
+      'success': bool success,
+      'message': String message
+      } => Album(success: success, message: message),
+      _ => throw const FormatException('Failed to load album')
+    };
+  }
 }
 
 class InputSchedule extends StatefulWidget {
@@ -47,6 +70,10 @@ class _InputScheduleState extends State<InputSchedule> {
   final TextEditingController _timeInController = TextEditingController();
   final TextEditingController _timeOutController = TextEditingController();
   String dropdownValue = days.first;
+  late Map<String, dynamic> result;
+
+  // variable with Future<Album> type
+  Future<Album>? futureAlbum;
 
   @override
   void dispose() {
@@ -55,6 +82,39 @@ class _InputScheduleState extends State<InputSchedule> {
     _timeInController.dispose();
     _timeOutController.dispose();
     super.dispose();
+  }
+
+  Future<Album> createSchedule(String day, String time_in, String time_out, int subject_id) async {
+    try {
+      var url = Uri.parse('http://10.0.2.2:8000/api/addSchedule');
+      final response = await http.post(
+          url,
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode(<String, dynamic> {
+            'day': day,
+            'time_in': time_in,
+            'time_out': time_out,
+            'subject_id': subject_id
+          })
+      );
+
+      if (response.statusCode == 200) {
+        // If the server did return a 200 OK response,
+        // then parse the JSON.
+        return Album.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+      } else {
+        // If the server did not return a 200 OK response,
+        // throw an exception with the status code and response body.
+        throw Exception('Failed to create album. Status code: ${response.statusCode}, Response body: ${response.body}');
+      }
+    } catch (e) {
+      // Catch any exceptions that occur during the process.
+      print('Error in createSchedule: $e');
+      // Re-throw the exception to propagate it further.
+      throw e;
+    }
   }
 
   @override
@@ -82,10 +142,12 @@ class _InputScheduleState extends State<InputSchedule> {
               controller: _subjectController,
               readOnly: true,
               onTap: () async {
-                _subjectController.text = await Navigator.push(
+                result = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const Subjects()),
                 );
+
+                _subjectController.text = result['title'];
               },
               decoration: const InputDecoration(
                   filled: true,
@@ -219,16 +281,35 @@ class _InputScheduleState extends State<InputSchedule> {
               child: ElevatedButton(
 
                 //balik sa activity screen
-                onPressed: () {
-                  Map<String, dynamic> scheduleMap = {
-                    'subject': _subjectController.text,
-                    'day': _dayController.text,
-                    'timeIn': _timeInController.text,
-                    'timeOut': _timeOutController.text,
-                    'selected': false,
-                  };
+                onPressed: () async {
+                  // Map<String, dynamic> scheduleMap = {
+                  //   'subject': _subjectController.text,
+                  //   'day': _dayController.text,
+                  //   'timeIn': _timeInController.text,
+                  //   'timeOut': _timeOutController.text,
+                  //   'selected': false,
+                  // };
 
-                  Navigator.pop(context, scheduleMap);
+                  // Navigator.pop(context, scheduleMap);
+
+                  try {
+                    futureAlbum = createSchedule(_dayController.text, _timeInController.text, _timeOutController.text, result['id']);
+                    Album? album = await futureAlbum;
+
+                    if (album!.success) {
+                      // If success is true, pop the navigator
+                      Navigator.pop(context, result['id']);
+                    }
+                    else {
+                      // Handle the case when success is false
+                      print('Failed to create schedule. Message: ${album.message}');
+                      // You can show an error message or take other actions if needed
+                    }
+                  }
+                  catch (e) {
+                    print('Error in onPressed: $e');
+                    // Handle other exceptions that might occur during the process
+                  }
                 },
 
                 style: ElevatedButton.styleFrom(

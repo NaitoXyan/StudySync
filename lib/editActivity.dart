@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:studysync/activityNotification.dart';
 import 'package:studysync/subjects.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class EditActivity extends StatefulWidget {
   String title;
@@ -10,8 +12,7 @@ class EditActivity extends StatefulWidget {
   String description;
   String date;
   String time;
-  String id;
-  int activityIndex;
+  int id;
 
   EditActivity({
     required this.title,
@@ -19,13 +20,34 @@ class EditActivity extends StatefulWidget {
     required this.description,
     required this.date,
     required this.time,
-    required this.activityIndex,
     required this.id,
     Key?  key
   }) : super(key: key);
 
   @override
   State<EditActivity> createState() => _EditActivityState();
+}
+
+class Album {
+  late bool success;
+  late String message;
+
+  Album({
+    required this.success,
+    required this.message
+  });
+
+  // json to album convert thingie
+  factory Album.fromJson(Map<String, dynamic> json) {
+    // using pattern matching
+    return switch (json) {
+      {
+      'success': bool success,
+      'message': String message
+      } => Album(success: success, message: message),
+      _ => throw const FormatException('Failed to load album')
+    };
+  }
 }
 
 class _EditActivityState extends State<EditActivity> {
@@ -36,6 +58,7 @@ class _EditActivityState extends State<EditActivity> {
   late final TextEditingController _descriptionController;
   late final TextEditingController _dateController;
   late final TextEditingController _timeController;
+  late final result;
 
   @override
   void initState() {
@@ -57,6 +80,38 @@ class _EditActivityState extends State<EditActivity> {
     super.dispose();
   }
 
+  Future<Album> updateActivity(String activity_title, String description, String deadline_day, String deadline_time, int subject_id) async {
+    var url = Uri.parse('http://10.0.2.2:8000/api/activity/${widget.id}');
+    final response = await http.put(
+      url,
+      headers: <String, String> {
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'activity_title': activity_title,
+        'description': description,
+        'deadline_day': deadline_day,
+        'deadline_time': deadline_time,
+        'subject_id': subject_id
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      print('success');
+      return Album.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    }
+
+    else {
+      // If the server did not return a 200 OK response,
+      // print the error details and then throw an exception.
+      print('Failed to update album. Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      throw Exception('Failed to update album.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -67,17 +122,7 @@ class _EditActivityState extends State<EditActivity> {
           backgroundColor: const Color(0xff1E213D),
           leading: BackButton(
             onPressed: () {
-
-              Map<String, String> activityDetails = {
-                'subject': widget.subject,
-                'title': widget.title,
-                'description': widget.description,
-                'date': widget.date,
-                'time': widget.time,
-                'id': widget.id
-              };
-
-              Navigator.pop(context, activityDetails);
+              Navigator.pop(context);
             },
           ),
           title: const Text('Edit Activity',
@@ -115,10 +160,12 @@ class _EditActivityState extends State<EditActivity> {
                       controller: _subjectController,
                       readOnly: true,
                       onTap: () async {
-                        _subjectController.text = await Navigator.push(
+                        result = await Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const Subjects()),
                         );
+
+                        _subjectController.text = result['title'];
                       },
                       decoration: const InputDecoration(
                           filled: true,
@@ -279,18 +326,19 @@ class _EditActivityState extends State<EditActivity> {
                       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 15.0),
                       child: ElevatedButton(
                         //balik sa activity screen
-                        onPressed: () {
+                        onPressed: () async {
                           //map sa tanan details
-                          Map<String, String> activityDetails = {
-                            'subject': _subjectController.text,
-                            'title': _titleController.text,
-                            'description': _descriptionController.text,
-                            'date': _dateController.text,
-                            'time': _timeController.text,
-                            'id': widget.id,
-                          };
+                          // Map<String, String> activityDetails = {
+                          //   'subject': _subjectController.text,
+                          //   'title': _titleController.text,
+                          //   'description': _descriptionController.text,
+                          //   'date': _dateController.text,
+                          //   'time': _timeController.text,
+                          //   'id': widget.id,
+                          // };
 
-                          int intId = int.parse(widget.id);
+                          updateActivity(_titleController.text, _descriptionController.text, _dateController.text, _timeController.text, result['id']);
+
                           String dateDeadline = _dateController.text;
                           String timeDeadline = _timeController.text;
                           String stringDateTime = '$dateDeadline $timeDeadline';
@@ -298,12 +346,20 @@ class _EditActivityState extends State<EditActivity> {
                           DateTime deadlineDateTime = DateFormat('d MMMM y HH:mm a').parse(stringDateTime);
 
                           // delete notification
-                          AwesomeNotifications().cancel(intId);
+                          AwesomeNotifications().cancel(widget.id);
                           // add new notification
                           scheduleActivityNotif(deadlineDateTime, widget.id);
 
+                          Map<String, dynamic> sendItTo = {
+                            'activity_title': _titleController.text,
+                            'description': _descriptionController.text,
+                            'deadline_day': _dateController.text,
+                            'deadline_time': _timeController.text,
+                            'subject_title': _subjectController.text
+                          };
+
                           // return screen with Map value
-                          Navigator.pop(context, activityDetails);
+                          Navigator.pop(context, sendItTo);
                         },
 
                         style: ElevatedButton.styleFrom(
