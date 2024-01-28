@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  flutter-app:
+    build: ./StudySync
+    ports:
+      - "5000:5000"
+
+  laravel-api:
+    build: ./studysync-api
+    ports:
+      - "80:80"
+    depends_on:
+      - mysql-db
+
+  mysql-db:
+    build: ./studysync-database
+    ports:
+      - "3306:3306"
